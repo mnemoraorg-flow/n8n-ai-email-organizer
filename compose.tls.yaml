@@ -1,0 +1,35 @@
+# TLS override for a real deployment. Use together with compose.yaml:
+#   docker compose -f compose.yaml -f compose.tls.yaml up -d
+#
+# Caddy terminates HTTPS on 80/443 and forwards to n8n over the internal
+# network, so n8n itself never publishes a port to the host.
+
+name: n8n-ai-email-organizer
+
+services:
+  caddy:
+    image: caddy:2.11.9
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
+    volumes:
+      - ./.infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - n8n
+    networks:
+      - internal
+
+  n8n:
+    # No port on the host: reachable only through Caddy.
+    expose:
+      - "5678"
+
+volumes:
+  caddy_data:
+  caddy_config:

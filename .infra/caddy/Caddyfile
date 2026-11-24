@@ -1,0 +1,24 @@
+# TLS_ACME=true obtains a publicly trusted certificate, so it needs DNS pointing
+# at this server with ports 80/443 reachable from the internet. The default,
+# TLS_ACME unset or false, uses Caddy's internal CA so the stack works on a
+# machine with no public DNS. HTTPS is on in both cases.
+{
+	{$TLS_ACME}local_certs
+}
+
+{$N8N_HOST:localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# TLS is terminated here, so n8n must be told the original scheme.
+	reverse_proxy n8n:5678 {
+		header_up X-Forwarded-Proto https
+	}
+}

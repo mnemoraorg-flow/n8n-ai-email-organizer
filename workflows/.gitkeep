@@ -1,0 +1,2 @@
+# Placeholder so the Dockerfile and the import job have a target before the
+# first workflow JSON exists. Delete it once a workflow is added.

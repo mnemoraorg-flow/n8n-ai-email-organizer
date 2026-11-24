@@ -1,0 +1,32 @@
+# One-off job that imports the workflow JSON from this repo into the n8n
+# database. Not part of the normal stack; run it explicitly:
+#   docker compose -f compose.yaml -f compose.import.yaml run --rm workflow-import
+#
+# Re-running is how workflow updates ship: n8n overwrites workflows whose ID is
+# already present. Imported workflows arrive deactivated, so activate them in the
+# UI once they are configured.
+
+name: n8n-ai-email-organizer
+
+services:
+  workflow-import:
+    build:
+      context: .
+      args:
+        N8N_VERSION: ${N8N_VERSION:?set N8N_VERSION in .env}
+    image: n8n-ai-email-organizer-workflows:${N8N_VERSION}
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+      - DB_POSTGRESDB_USER=${POSTGRES_NON_ROOT_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:?set N8N_ENCRYPTION_KEY in .env}
+    command: ["n8n", "import:workflow", "--separate", "--input=/import/workflows"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal

@@ -1,0 +1,9 @@
+# Real secrets live in .env; only the template is committed.
+.env
+
+# Local shared directory for the Read/Write Files from Disk node.
+local-files/
+
+# Editor and OS noise
+.DS_Store
+*.swp
